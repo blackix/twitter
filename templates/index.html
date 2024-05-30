@@ -9,14 +9,14 @@
 <body>
     <div class="container">
         {% if username %}
-            <p>Ciao {{ username }}</p>
+            <p class="welcome-message">Ciao {{ username }}</p>
             <form method="post" enctype="multipart/form-data" id="tweet-form">
                 <div contenteditable="true" id="tweet-textarea" class="tweet-textarea" placeholder="Your Tweet" required></div>
                 <textarea name="tweet" id="hidden-tweet-textarea" style="display: none;"></textarea>
                 <div class="form-toolbar">
-                    <button type="button" onclick="formatText('bold')"><b>B</b></button>
-                    <button type="button" onclick="formatText('italic')"><i>I</i></button>
-                    <button type="button" onclick="formatText('underline')"><u>U</u></button>
+                    <button type="button" onclick="toggleFormat(this, 'bold')"><b>B</b></button>
+                    <button type="button" onclick="toggleFormat(this, 'italic')"><i>I</i></button>
+                    <button type="button" onclick="toggleFormat(this, 'underline')"><u>U</u></button>
                     <label for="file-input" class="custom-file-upload">
                         <img src="{{ url_for('static', filename='imgs/image-gallery.png') }}" alt="Upload Image" class="icon">
                     </label>
@@ -42,7 +42,7 @@
                     </div>
                     <div class="tweet-content">{{ tweet[2]|safe }}</div>
                     {% if tweet[4] %}
-                        <div><img src="{{ url_for('static', filename=tweet[4].split('static/')[1]) }}" alt="Tweet Image"></div>
+                        <div><img src="{{ url_for('static', filename=tweet[4].split('static/')[1]) }}" alt="Tweet Image" onclick="openModal(this)"></div>
                     {% endif %}
                     <div class="replies">
                         {% for reply in replies %}
@@ -79,6 +79,13 @@
             {% endfor %}
         </div>
     </div>
+
+    <!-- Modale per l'immagine -->
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("tweet-textarea").addEventListener("keydown", function(event) {
@@ -118,6 +125,23 @@
             var tweetContent = document.getElementById('tweet-textarea').innerHTML;
             document.getElementById('hidden-tweet-textarea').value = tweetContent;
             document.getElementById('tweet-form').submit();
+        }
+
+        function toggleFormat(button, command) {
+            document.execCommand(command, false, '');
+            button.classList.toggle('active');
+        }
+
+        function openModal(image) {
+            var modal = document.getElementById('imageModal');
+            var modalImg = document.getElementById('modalImage');
+            modal.style.display = "block";
+            modalImg.src = image.src;
+        }
+
+        function closeModal() {
+            var modal = document.getElementById('imageModal');
+            modal.style.display = "none";
         }
     </script>
 </body>
