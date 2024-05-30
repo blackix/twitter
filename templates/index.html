@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Twitter Clone</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% if username %}
+            <p>Ciao {{ username }}</p>
+            <form method="post" enctype="multipart/form-data" id="tweet-form">
+                <div contenteditable="true" id="tweet-textarea" class="tweet-textarea" placeholder="Your Tweet" required></div>
+                <textarea name="tweet" id="hidden-tweet-textarea" style="display: none;"></textarea>
+                <div class="form-toolbar">
+                    <button type="button" onclick="formatText('bold')"><b>B</b></button>
+                    <button type="button" onclick="formatText('italic')"><i>I</i></button>
+                    <button type="button" onclick="formatText('underline')"><u>U</u></button>
+                    <label for="file-input" class="custom-file-upload">
+                        <img src="{{ url_for('static', filename='imgs/image-gallery.png') }}" alt="Upload Image" class="icon">
+                    </label>
+                    <input type="file" name="image" accept="image/*" id="file-input" onchange="previewImage(event)" style="display: none;">
+                    <button type="submit" onclick="submitForm()">Tweet</button>
+                </div>
+                <div id="image-preview" style="display: none;">
+                    <img id="preview" src="" alt="Image Preview" style="max-width: 100px; max-height: 100px; margin-top: 10px;">
+                </div>
+            </form>
+        {% else %}
+            <form method="post">
+                <input type="text" name="name" placeholder="Your Name" required>
+                <button type="submit">Set Name</button>
+            </form>
+        {% endif %}
+        <div class="tweets">
+            {% for tweet, replies in tweets %}
+                <div class="tweet">
+                    <div class="tweet-header">
+                        <strong class="tweet-name">{{ tweet[1] }}</strong> 
+                        <em class="tweet-time">{{ tweet[3] }}</em>
+                    </div>
+                    <div class="tweet-content">{{ tweet[2]|safe }}</div>
+                    {% if tweet[4] %}
+                        <div><img src="{{ url_for('static', filename=tweet[4].split('static/')[1]) }}" alt="Tweet Image"></div>
+                    {% endif %}
+                    <div class="replies">
+                        {% for reply in replies %}
+                            <div class="reply">
+                                <div class="reply-header">
+                                    {% if reply[4] %}
+                                        <strong class="reply-name">@{{ get_reply_author(reply[4]) }} {{ reply[1] }}</strong>
+                                    {% else %}
+                                        <strong class="reply-name">{{ reply[1] }}</strong>
+                                    {% endif %}
+                                    <em class="reply-time">{{ reply[3] }}</em>
+                                </div>
+                                <div class="reply-content">{{ reply[2]|safe }}</div>
+                                <button class="reply-button" onclick="showReplyForm({{ tweet[0] }}, {{ reply[0] }})">Reply</button>
+                                <div id="reply-form-{{ tweet[0] }}-{{ reply[0] }}" class="reply-form-container" style="display: none;">
+                                    <form method="post" action="{{ url_for('reply', tweet_id=tweet[0]) }}">
+                                        <textarea name="reply" class="reply-textarea" placeholder="Your Reply" required></textarea>
+                                        <input type="hidden" name="parent_reply_id" value="{{ reply[0] }}">
+                                        <button type="submit" class="submit-reply-button">Reply</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div id="reply-form-{{ tweet[0] }}" class="reply-form-container" style="display: none;">
+                        <form method="post" action="{{ url_for('reply', tweet_id=tweet[0]) }}">
+                            <textarea name="reply" class="reply-textarea" placeholder="Your Reply" required></textarea>
+                            <input type="hidden" name="parent_reply_id" value="">
+                            <button type="submit" class="submit-reply-button">Reply</button>
+                        </form>
+                    </div>
+                    <button class="reply-button" onclick="showReplyForm({{ tweet[0] }}, null)">Reply</button>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("tweet-textarea").addEventListener("keydown", function(event) {
+                if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    submitForm();
+                }
+            });
+        });
+
+        function showReplyForm(tweetId, replyId) {
+            var formId = 'reply-form-' + tweetId;
+            if (replyId !== null) {
+                formId += '-' + replyId;
+            }
+            var form = document.getElementById(formId);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function formatText(command) {
+            document.execCommand(command, false, '');
+        }
+
+        function previewImage(event) {
+            var input = event.target;
+            var reader = new FileReader();
+            reader.onload = function(){
+                var dataURL = reader.result;
+                var output = document.getElementById('preview');
+                output.src = dataURL;
+                document.getElementById('image-preview').style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function submitForm() {
+            var tweetContent = document.getElementById('tweet-textarea').innerHTML;
+            document.getElementById('hidden-tweet-textarea').value = tweetContent;
+            document.getElementById('tweet-form').submit();
+        }
+    </script>
+</body>
+</html>

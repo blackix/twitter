@@ -1,0 +1,20 @@
+<div class="reply">
+    <div class="reply-header">
+        <strong class="reply-name">{{ reply[1] }}</strong>
+        <em class="reply-time">{{ reply[3] }}</em>
+    </div>
+    <div class="reply-content">{{ reply[2]|safe }}</div>
+    <button class="reply-button" onclick="showReplyForm({{ reply[4] }}, {{ reply[0] }})">Reply</button>
+    <div id="reply-form-{{ reply[4] }}-{{ reply[0] }}" class="reply-form-container" style="display: none;">
+        <form method="post" action="{{ url_for('reply', tweet_id=reply[4]) }}">
+            <textarea name="reply" class="reply-textarea" placeholder="Your Reply" required></textarea>
+            <input type="hidden" name="parent_reply_id" value="{{ reply[0] }}">
+            <button type="submit" class="submit-reply-button">Reply</button>
+        </form>
+    </div>
+    <div class="nested-replies">
+        {% for nested_reply, nested_nested_replies in nested_replies %}
+            {% include 'reply.html' %}
+        {% endfor %}
+    </div>
+</div>
